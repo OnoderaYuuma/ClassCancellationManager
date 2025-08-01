@@ -1,0 +1,217 @@
+# アプリケーション要件
+
+## 概要
+管理者が授業の休講情報をデータベースに登録し、学生がそれを確認できるシステム。
+
+## 主要機能
+1.  **ログイン機能**: 学生、管理者のログイン機能と認証・認可。
+2.  **予定登録機能 (管理者)**:
+    *   管理者は、休講、振替、教室変更、特別講義など、授業に関連する様々な予定を登録・管理できる。
+3.  **予定確認機能 (学生)**:
+    *   学生は、自身が履修している授業に関連するすべての予定（休講、振替、教室変更など）を時系列で確認できる。
+
+## 制約・その他
+*   授業は週に複数回行われる場合がある。
+*   1日最大4コマの授業がある。
+
+---
+
+# データベース設計
+
+## テーブル構成とカラム
+
+### 1. `users` テーブル
+*   **目的**: アプリケーションのユーザー（学生、管理者）情報を管理。認証・認可の基盤。
+*   **カラム**:
+    *   `user_id` (BIGINT, PRIMARY KEY, AUTO_INCREMENT): ユーザーID
+    *   `username` (VARCHAR(255), UNIQUE, NOT NULL): ログイン用ユーザー名（メールアドレスなど）
+    *   `password` (VARCHAR(255), NOT NULL): ハッシュ化されたパスワード
+    *   `role` (VARCHAR(50), NOT NULL): ユーザーの役割（'STUDENT', 'ADMIN'）
+
+### 2. `classes` テーブル
+*   **目的**: 授業の基本情報を管理。
+*   **カラム**:
+    *   `class_id` (BIGINT, PRIMARY KEY, AUTO_INCREMENT): 授業ID
+    *   `class_name` (VARCHAR(255), NOT NULL): 授業名
+    *   `course_rules_name` (VARCHAR(255), NOT NULL): 学則科目名(授業名から見て多になるジャンルのようなもの)
+    *   `credit_hours` (INT, NOT NULL): 単位時間数
+    *   `academic_year` (INT, NOT NULL): 開講年度
+    *   `scheduled_term` (VARCHAR(50), NOT NULL): 開講予定期（'前期', '後期', '夏期集中講義', '春期集中講義'）
+    *   `recommended_grade` (INT, NOT NULL): 推奨学年
+
+### 3. `class_schedules` テーブル
+*   **目的**: 各授業の具体的な開催日時（曜日とコマ）を管理。1つの授業が週に複数回行われる場合に対応。
+*   **カラム**:
+    *   `schedule_id` (BIGINT, PRIMARY KEY, AUTO_INCREMENT): スケジュールID
+    *   `class_id` (BIGINT, NOT NULL): 関連する授業のID (FK to `classes.class_id`)
+    *   `day_of_week` (VARCHAR(20), NOT NULL): 授業が行われる曜日（例: 'MONDAY', 'TUESDAY' など）
+    *   `period` (INT, NOT NULL): 授業のコマ数（1, 2, 3, 4）
+    *   `UNIQUE(class_id, day_of_week, period)`: 同じ授業が同じ曜日・コマに複数登録されないようにする複合ユニーク制約
+
+### 4. `enrollments` テーブル
+*   **目的**: 学生がどの授業をどの年度・学期に受講しているかを管理。`users`と`classes`の多対多の関係を解決。
+*   **カラム**:
+    *   `enrollment_id` (BIGINT, PRIMARY KEY, AUTO_INCREMENT): 受講情報ID
+    *   `student_id` (BIGINT, NOT NULL): 学生のユーザーID (FK to `users.user_id`)
+    *   `class_id` (BIGINT, NOT NULL): 受講している授業のID (FK to `classes.class_id`)
+    *   `academic_year` (INT, NOT NULL): 受講年度
+    *   `scheduled_term` (VARCHAR(50), NOT NULL): 受講学期
+    *   `UNIQUE(student_id, class_id, academic_year, scheduled_term)`: 同じ学生が同じ授業を同じ年度・学期に複数回登録できないようにする複合ユニーク制約
+
+### 5. `schedule_events` テーブル
+*   **目的**: 授業に関する様々なイベント（休講、振替、教室変更など）を管理。
+*   **カラム**:
+    *   `event_id` (BIGINT, PRIMARY KEY, AUTO_INCREMENT): イベントID
+    *   `class_id` (BIGINT, NOT NULL): どの授業に対するイベントか (FK to `classes.class_id`)
+    *   `event_type` (VARCHAR(50), NOT NULL): イベント種別（例: 'CANCELLATION', 'MAKEUP_CLASS', 'SPECIAL_LECTURE', 'OTHER'）
+    *   `original_date` (DATE, NOT NULL): イベント対象の元々の授業日
+    *   `description` (TEXT): イベントの詳細や理由（例: 「〇〇先生都合により休講」「〇〇教室へ変更」）
+    *   `makeup_date` (DATE): 振替日 (振替授業の場合)
+    *   `makeup_period` (INT): 振替コマ (振替授業の場合)
+    *   `registered_by` (BIGINT, NOT NULL): 登録した管理者のユーザーID (FK to `users.user_id`)
+    *   `created_at` (TIMESTAMP, DEFAULT CURRENT_TIMESTAMP): 登録日時
+    *   `UNIQUE(class_id, original_date, event_type)`: 同じ授業の同じ日に同じタイプのイベントが重複しないようにする制約
+
+---
+
+# パッケージ構成
+
+*   `controller`: ルーティング機能を持つコントローラークラスを格納する
+*   `service`: ビジネスロジックを持つサービスクラスを格納する
+*   `entity`: データベースから取得した値を保持するためのクラスを格納する。このクラスはテーブルの各カラムと1対1でマッピングされたフィールドを持つ
+*   `form`: HTMLのフォームの値を保持するためのクラスを格納する
+*   `mapper`: Mybatisのデータベース操作のSQLを定義するインタフェースを格納する
+*   `repository`: Mybatisのデータベース処理を呼び出すリポジトリークラスを格納する
+*   `viewmodel`: 画面に表示するための情報を持つクラスを格納する
+*   `security`: SpringSecurityに関するクラスを格納する
+
+---
+
+# 画面設計
+
+## 共通画面
+*   **ログイン画面**
+    *   パス (`/login`)
+    *   機能: ユーザー名とパスワードを入力し、ログイン認証を行う。
+
+## 学生用画面
+*   **授業予定一覧画面**
+    *   パス (`/student/events`)
+    *   機能:
+        *   ログイン中の学生が履修している授業のすべての予定（休講、振替、教室変更など）をカレンダー形式で表示する。
+        *   カレンダーはデフォルトで現在の月を表示し、ユーザーは月を移動できる。また、画面上のUIで表示対象の年度を切り替えることも可能。
+        *   学期開始時（前期: 4月1日, 後期: 9月1日）に、その学期の履修登録がされていない場合、カレンダーに予定は表示せず、履修登録を促すメッセージを表示する。
+*   **受講情報登録・編集画面**
+    *   パス (`/student/enrollments`)
+    *   機能:
+        *   学生が履修する授業を登録・編集する。
+        *   画面には、月曜日から金曜日までの5列、1限から4限までの4行の時間割形式のグリッドが表示される。
+        *   ユーザーは授業検索機能（キーワードで検索し、候補から選択）を使って履修したい授業を選ぶ。
+        *   授業を選択すると、その授業が開催される曜日・コマに対応するグリッドのマスに授業名が表示される。
+        *   既に他の授業が登録されているマスに、新しい授業を登録しようとするとエラーメッセージが表示され、登録は行えない。
+        *   最終的に「登録」ボタンを押すことで、時間割の内容がデータベースに保存される。
+
+## 管理者用画面
+*   **授業予定管理画面**
+    *   パス (`/admin/events`)
+    *   機能: すべての授業の予定を一覧で表示する。新規登録、編集、削除への導線を持つ。
+*   **授業予定登録画面**
+    *   パス (`/admin/events/new`)
+    *   機能: 授業、イベント種別、日付、詳細などを入力して、新しい予定を登録するフォーム。
+*   **授業予定編集画面**
+    *   パス (`/admin/events/{id}/edit`)
+    *   機能: 既存の予定を編集するフォーム。
+*   **授業情報登録画面**
+    *   パス (`/admin/classes/new`)
+    *   機能: 授業情報を登録する。CSVでの一括登録も可能。
+
+---
+
+# フロントエンド実装方針
+
+## カレンダーライブラリ
+*   **使用ライブラリ**: `FullCalendar`
+*   **選定理由**: 機能性、安定性、拡張性、ドキュメントの豊富さの観点から、本プロジェクトの要件に最も適しているため。
+*   **実装方法**: CDN経由でライブラリを読み込み、Thymeleafテンプレート内のJavaScriptで初期化する。サーバーサイドはカレンダーに表示するためのイベント情報をJSON形式で提供するAPIを実装する。
+
+## データ表示
+*   **データ取得単位**: 学生の予定を表示する際、データは年度単位でサーバーから取得する。これにより、月移動のたびにサーバーへリクエストする必要がなくなり、軽快なユーザー体験を実現する。
+*   **カレンダー表示単位**: 画面上のカレンダーは月単位で表示する。ユーザーはカレンダーのUIを操作して前後の月に移動できる。
+
+---
+
+# API設計 (Controller Endpoints)
+
+## 認証系
+*   `GET /login`: ログインページを返す。
+*   `POST /login`: ログイン処理を行う (Spring Securityが処理)。
+*   `POST /logout`: ログアウト処理を行う。
+
+## 学生 (STUDENTロール)
+*   `GET /student/events`: 履修中の授業の予定一覧ページを返す。
+*   `GET /student/enrollments`: 受講情報の登録・編集ページを返す。
+*   `POST /student/enrollments`: 受講情報を更新する。
+
+## 管理者 (ADMINロール)
+*   `GET /admin/events`: 全ての授業予定一覧・管理ページを返す。
+*   `GET /admin/events/new`: 授業予定の新規登録ページを返す。
+*   `POST /admin/events`: 授業予定を新規登録する。
+*   `GET /admin/events/{id}/edit`: 授業予定の編集ページを返す。
+*   `POST /admin/events/{id}/update`: 授業予定を更新する。
+*   `POST /admin/events/{id}/delete`: 授業予定を削除する。
+*   `GET /admin/classes/new`: 授業情報の登録ページを返す。
+*   `POST /admin/classes`: 授業情報を登録する。
+*   `POST /admin/classes/upload`: CSVファイルで授業情報を一括登録する。
+
+---
+
+# 開発手順 (機能単位)
+
+# 開発手順 (機能単位)
+
+
+機能ごとにバックエンドとフロントエンドを実装し、都度動作確認を行いながら開発を進めます。
+各コードに日本語でのコメントを記述し、可読性を向上させる。
+
+### Step 1: ログイン機能の実装
+
+アプリケーションの基本となる認証機能を最初に実装します。
+
+1.  **DBスキーマと初期データの準備 (`users`テーブル)**:
+    *   `src/main/resources/schema.sql` に `users` テーブルを作成するSQLを記述します。
+    *   `src/main/resources/data.sql` に、ログイン確認用のテストユーザー（管理者、学生）を登録するSQLを記述します。パスワードはハッシュ化して登録します。
+
+2.  **`User` Entityの作成**:
+    *   `src/main/java/com/example/classcancellationmanager/entity` パッケージに、`users` テーブルに対応する `User` クラスを作成します。
+
+3.  **`User`関連のMapperとRepositoryの作成**:
+    *   `mapper` パッケージに、ユーザー名でユーザー情報を取得するMyBatisのインターフェースを作成します。
+    *   `repository` パッケージに、Mapperを呼び出すクラスを作成します。
+
+4.  **Spring Securityの設定**:
+    *   `security` パッケージに `UserDetailsService` の実装クラスを作成し、Repository経由でユーザー情報を取得できるようにします。
+    *   `SecurityConfig` クラスを作成し、ログイン処理、URLごとのアクセス権限（`/admin/**` はADMIN, `/student/**` はSTUDENT）、ログアウト機能などを設定します。
+
+5.  **ログイン画面とControllerの作成**:
+    *   `controller` パッケージに、ログイン画面を表示するためのControllerを作成します。
+    *   `templates` ディレクトリに、ログインフォームを持つ `login.html` を作成します。
+
+6.  **動作確認**:
+    *   アプリケーションを起動し、`/login` にアクセスして画面が表示されることを確認します。
+    *   `data.sql` で登録したユーザー情報でログイン・ログアウトができること、権限のないページへのアクセスが拒否されることを確認します。
+
+### Step 2: 管理者向け機能の実装
+
+(ログイン機能が完成次第、次の機能を実装します)
+
+*   **授業情報登録機能**
+*   **授業予定管理機能**
+*   ...
+
+### Step 3: 学生向け機能の実装
+
+(管理者向け機能が完成次第、次の機能を実装します)
+
+*   **受講情報登録・編集機能**
+*   **授業予定一覧表示機能**
+*   ...

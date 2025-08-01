@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>授業予定管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1>授業予定管理</h1>
+        <a href="/admin/events/new" class="btn btn-primary">新規登録</a>
+    </div>
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>イベントID</th>
+            <th>授業ID</th>
+            <th>イベント種別</th>
+            <th>元の日付</th>
+            <th>詳細</th>
+            <th>振替日</th>
+            <th>振替時限</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="event : ${events}">
+            <td th:text="${event.eventId}"></td>
+            <td th:text="${event.classId}"></td>
+            <td th:text="${event.eventType}"></td>
+            <td th:text="${event.originalDate}"></td>
+            <td th:text="${event.description}"></td>
+            <td th:text="${event.makeupDate}"></td>
+            <td th:text="${event.makeupPeriod}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
