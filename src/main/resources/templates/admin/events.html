@@ -17,7 +17,8 @@
             <th>イベントID</th>
             <th>授業ID</th>
             <th>イベント種別</th>
-            <th>元の日付</th>
+            <th>イベント日</th>
+            <th>イベント時限</th>
             <th>詳細</th>
             <th>振替日</th>
             <th>振替時限</th>
@@ -27,8 +28,16 @@
         <tr th:each="event : ${events}">
             <td th:text="${event.eventId}"></td>
             <td th:text="${event.classId}"></td>
-            <td th:text="${event.eventType}"></td>
-            <td th:text="${event.originalDate}"></td>
+            <td>
+                <span th:switch="${event.eventType}">
+                    <span th:case="'CANCELLATION'">休講</span>
+                    <span th:case="'MAKEUP_CLASS'">振替授業</span>
+                    <span th:case="'SPECIAL_LECTURE'">特別講義</span>
+                    <span th:case="*" th:text="${event.eventType}"></span>
+                </span>
+            </td>
+            <td th:text="${event.eventDate}"></td>
+            <td th:text="${event.eventPeriod}"></td>
             <td th:text="${event.description}"></td>
             <td th:text="${event.makeupDate}"></td>
             <td th:text="${event.makeupPeriod}"></td>

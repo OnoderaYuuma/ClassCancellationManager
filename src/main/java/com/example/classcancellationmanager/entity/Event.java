@@ -10,7 +10,8 @@ public class Event {
     private Long eventId;
     private Long classId;
     private String eventType;
-    private LocalDate originalDate;
+    private LocalDate eventDate;
+    private Integer eventPeriod;
     private String description;
     private LocalDate makeupDate;
     private Integer makeupPeriod;

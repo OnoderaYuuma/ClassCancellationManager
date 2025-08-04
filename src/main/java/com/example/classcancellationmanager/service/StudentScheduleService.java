@@ -1,10 +1,8 @@
 package com.example.classcancellationmanager.service;
 
-import com.example.classcancellationmanager.entity.ClassSchedule;
 import com.example.classcancellationmanager.entity.Course;
 import com.example.classcancellationmanager.entity.Enrollment;
 import com.example.classcancellationmanager.entity.Event;
-import com.example.classcancellationmanager.mapper.ClassScheduleMapper;
 import com.example.classcancellationmanager.mapper.CourseMapper;
 import com.example.classcancellationmanager.mapper.EnrollmentMapper;
 import com.example.classcancellationmanager.mapper.EventMapper;
@@ -26,9 +24,6 @@ public class StudentScheduleService {
     private EnrollmentMapper enrollmentMapper;
 
     @Autowired
-    private ClassScheduleMapper classScheduleMapper;
-
-    @Autowired
     private EventMapper eventMapper;
 
     @Autowired
@@ -42,62 +37,62 @@ public class StudentScheduleService {
 
         for (Enrollment enrollment : enrollments) {
             Course course = courseMapper.findById(enrollment.getClassId());
-            if (course == null) continue; // 念のためコースが存在しない場合はスキップ
+            if (course == null) continue;
 
-            // 2. 授業に関連するイベントを取得
+            // 2. 授業に関連するすべてのイベントを取得
             List<Event> events = eventMapper.findByClassId(enrollment.getClassId());
 
-            // 3. 授業の週ごとのスケジュールを取得
-            List<ClassSchedule> classSchedules = classScheduleMapper.findByClassId(enrollment.getClassId());
-
             for (Event event : events) {
-                // original_date に紐づくイベント（休講、独立した振替授業、教室変更など）を処理
-                if (event.getOriginalDate() != null) {
-                    for (ClassSchedule classSchedule : classSchedules) {
-                        if (event.getOriginalDate().getDayOfWeek().toString().equals(classSchedule.getDayOfWeek())) {
-                            // 曜日が一致した場合のみイベントを作成
+                switch (event.getEventType()) {
+                    case "CANCELLATION":
+                        // 休講イベントを追加
+                        fullCalendarEvents.add(createCalendarEvent(
+                                course.getClassName(),
+                                "休講",
+                                event.getEventDate(),
+                                event.getEventPeriod(),
+                                event.getDescription(),
+                                "CANCELLATION"
+                        ));
 
-                            if ("CANCELLATION".equals(event.getEventType())) {
-                                // 「休講」イベントを追加
-                                fullCalendarEvents.add(createCalendarEvent(
-                                        course.getClassName(),
-                                        "休講",
-                                        event.getOriginalDate(),
-                                        classSchedule.getPeriod(),
-                                        event.getDescription(),
-                                        event,
-                                        "CANCELLATION"
-                                ));
-                            } else {
-                                // 「休講」以外のイベント（振替授業、教室変更など）
-                                // getEventTypeInJapanese により、「MAKEUP_CLASS」は「振替授業」に変換される
-                                fullCalendarEvents.add(createCalendarEvent(
-                                        course.getClassName(),
-                                        getEventTypeInJapanese(event.getEventType()),
-                                        event.getOriginalDate(),
-                                        classSchedule.getPeriod(),
-                                        event.getDescription(),
-                                        event,
-                                        event.getEventType()
-                                ));
-                            }
-                            // スケジュールが見つかったのでループを抜ける
-                            break;
+                        // 紐付く振替授業があれば、それも追加
+                        if (event.getMakeupDate() != null && event.getMakeupPeriod() != null) {
+                            fullCalendarEvents.add(createCalendarEvent(
+                                    course.getClassName(),
+                                    "振替授業",
+                                    event.getMakeupDate(),
+                                    event.getMakeupPeriod(),
+                                    "(振替) " + event.getDescription(),
+                                    "MAKEUP_CLASS"
+                            ));
                         }
-                    }
-                }
+                        break;
 
-                // 休講に紐づく振替授業は、元のスケジュールとは独立しているため、ここで別途追加
-                if ("CANCELLATION".equals(event.getEventType()) && event.getMakeupDate() != null && event.getMakeupPeriod() != null) {
-                    fullCalendarEvents.add(createCalendarEvent(
-                            course.getClassName(),
-                            "振替授業",
-                            event.getMakeupDate(),
-                            event.getMakeupPeriod(),
-                            event.getDescription(),
-                            event,
-                            "MAKEUP_CLASS"
-                    ));
+                    case "MAKEUP_CLASS":
+                        // 単独の振替授業イベントを追加
+                        fullCalendarEvents.add(createCalendarEvent(
+                                course.getClassName(),
+                                "振替授業",
+                                event.getEventDate(),
+                                event.getEventPeriod(),
+                                event.getDescription(),
+                                "MAKEUP_CLASS"
+                        ));
+                        break;
+
+                    case "SPECIAL_LECTURE":
+                        // 特別講義イベントを追加
+                        fullCalendarEvents.add(createCalendarEvent(
+                                course.getClassName(),
+                                "特別講義",
+                                event.getEventDate(),
+                                event.getEventPeriod(),
+                                event.getDescription(),
+                                "SPECIAL_LECTURE"
+                        ));
+                        break;
+
+                    // OTHER など、他のケースもここに追加可能
                 }
             }
         }
@@ -107,7 +102,7 @@ public class StudentScheduleService {
     /**
      * FullCalendar用のイベントオブジェクトを生成するヘルパーメソッド
      */
-    private Map<String, Object> createCalendarEvent(String courseName, String eventTypeJp, LocalDate date, int period, String description, Event originalEvent, String eventTypeForColor) {
+    private Map<String, Object> createCalendarEvent(String courseName, String eventTypeJp, LocalDate date, int period, String description, String eventTypeForColor) {
         Map<String, Object> calendarEvent = new HashMap<>();
 
         LocalTime startTime = getTimeForPeriod(period);
@@ -120,29 +115,8 @@ public class StudentScheduleService {
         calendarEvent.put("end", endDateTime.toString());
         calendarEvent.put("description", description);
         calendarEvent.put("color", getColorForEventType(eventTypeForColor)); // 色を設定
-        calendarEvent.put("extendedProps", originalEvent); // 元のイベント情報を保持
 
         return calendarEvent;
-    }
-
-    /**
-     * イベント種別を日本語に変換するヘルパーメソッド
-     */
-    private String getEventTypeInJapanese(String eventType) {
-        switch (eventType) {
-            case "CANCELLATION":
-                return "休講";
-            case "MAKEUP_CLASS":
-                return "振替授業";
-            case "ROOM_CHANGE":
-                return "教室変更";
-            case "SPECIAL_LECTURE":
-                return "特別講義";
-            case "OTHER":
-                return "その他";
-            default:
-                return eventType; // 不明な種別はそのまま返す
-        }
     }
 
     /**

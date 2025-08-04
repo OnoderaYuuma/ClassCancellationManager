@@ -39,13 +39,14 @@ CREATE TABLE IF NOT EXISTS schedule_events (
     event_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     class_id BIGINT NOT NULL,
     event_type VARCHAR(50) NOT NULL,
-    original_date DATE NOT NULL,
+    event_date DATE NOT NULL,
+    event_period INT NOT NULL,
     description TEXT,
     makeup_date DATE,
     makeup_period INT,
     registered_by BIGINT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(class_id, original_date, event_type),
+    UNIQUE(class_id, event_date, event_period, event_type),
     FOREIGN KEY (class_id) REFERENCES classes(class_id),
     FOREIGN KEY (registered_by) REFERENCES users(user_id)
 );

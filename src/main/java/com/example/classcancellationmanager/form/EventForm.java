@@ -13,7 +13,9 @@ public class EventForm {
     private String eventType;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
-    private LocalDate originalDate;
+    private LocalDate eventDate;
+
+    private Integer eventPeriod;
 
     private String description;
 

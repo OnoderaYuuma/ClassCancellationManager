@@ -4,6 +4,19 @@
     <meta charset="UTF-8">
     <title>授業予定登録</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        /* アニメーションのためのCSS */
+        .makeup-info-wrapper {
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+            max-height: 0;
+            opacity: 0;
+        }
+        .makeup-info-wrapper.show {
+            max-height: 300px; /* 十分な高さを確保 */
+            opacity: 1;
+        }
+    </style>
 </head>
 <body>
 <div class="container mt-4">
@@ -23,28 +36,95 @@
                 <option value="CANCELLATION">休講</option>
                 <option value="MAKEUP_CLASS">振替授業</option>
                 <option value="SPECIAL_LECTURE">特別講義</option>
-                <option value="OTHER">その他</option>
             </select>
         </div>
         <div class="mb-3">
-            <label for="originalDate" class="form-label">予定日</label>
-            <input type="date" id="originalDate" class="form-control" th:field="*{originalDate}" required>
+            <label for="eventDate" class="form-label">イベント日</label>
+            <input type="date" id="eventDate" class="form-control" th:field="*{eventDate}" required>
+        </div>
+        <div class="mb-3">
+            <label for="eventPeriod" class="form-label">イベント時限</label>
+            <select id="eventPeriod" class="form-select" th:field="*{eventPeriod}" required>
+                <option value="">時限を選択してください</option>
+                <option th:each="p : ${#numbers.sequence(1, 4)}" th:value="${p}" th:text="${p + '限'}"></option>
+            </select>
         </div>
         <div class="mb-3">
             <label for="description" class="form-label">詳細</label>
             <textarea id="description" class="form-control" rows="3" th:field="*{description}"></textarea>
         </div>
-        <div class="mb-3">
-            <label for="makeupDate" class="form-label">振替日(休講と同時に登録する場合に入力)</label>
-            <input type="date" id="makeupDate" class="form-control" th:field="*{makeupDate}">
+
+        <!-- 休講選択時に表示される振替設定 -->
+        <div id="cancellationOptions" class="d-none">
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" id="setMakeupClass">
+                <label class="form-check-label" for="setMakeupClass">
+                    振替授業を設定する
+                </label>
+            </div>
         </div>
-        <div class="mb-3">
-            <label for="makeupPeriod" class="form-label">振替時限</label>
-            <input type="number" id="makeupPeriod" class="form-control" th:field="*{makeupPeriod}" min="1" max="4">
+
+        <!-- 振替情報入力欄 (最初は非表示) -->
+        <div id="makeupInfo" class="makeup-info-wrapper">
+            <div class="card card-body">
+                <h5>振替情報</h5>
+                <div class="mb-3">
+                    <label for="makeupDate" class="form-label">振替日</label>
+                    <input type="date" id="makeupDate" class="form-control" th:field="*{makeupDate}">
+                </div>
+                <div class="mb-3">
+                    <label for="makeupPeriod" class="form-label">振替時限</label>
+                    <select id="makeupPeriod" class="form-select" th:field="*{makeupPeriod}">
+                        <option value="">時限を選択してください</option>
+                        <option th:each="p : ${#numbers.sequence(1, 4)}" th:value="${p}" th:text="${p + '限'}"></option>
+                    </select>
+                </div>
+            </div>
         </div>
-        <button type="submit" class="btn btn-primary">登録</button>
-        <a href="/admin/events" class="btn btn-secondary">キャンセル</a>
+
+        <button type="submit" class="btn btn-primary mt-3">登録</button>
+        <a href="/admin/events" class="btn btn-secondary mt-3">キャンセル</a>
     </form>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const eventTypeSelect = document.getElementById('eventType');
+        const cancellationOptions = document.getElementById('cancellationOptions');
+        const setMakeupClassCheckbox = document.getElementById('setMakeupClass');
+        const makeupInfo = document.getElementById('makeupInfo');
+
+        function toggleMakeupFields() {
+            const isCancellation = eventTypeSelect.value === 'CANCELLATION';
+            const isMakeupChecked = setMakeupClassCheckbox.checked;
+
+            // 「休講」選択時のみ振替設定チェックボックスを表示
+            if (isCancellation) {
+                cancellationOptions.classList.remove('d-none');
+            } else {
+                cancellationOptions.classList.add('d-none');
+            }
+
+            // 振替設定がチェックされている場合のみ振替情報欄を表示
+            if (isCancellation && isMakeupChecked) {
+                makeupInfo.classList.add('show');
+                // 必須属性を動的に設定
+                document.getElementById('makeupDate').required = true;
+                document.getElementById('makeupPeriod').required = true;
+            } else {
+                makeupInfo.classList.remove('show');
+                // 必須属性を解除
+                document.getElementById('makeupDate').required = false;
+                document.getElementById('makeupPeriod').required = false;
+            }
+        }
+
+        eventTypeSelect.addEventListener('change', toggleMakeupFields);
+        setMakeupClassCheckbox.addEventListener('change', toggleMakeupFields);
+
+        // 初期表示処理
+        toggleMakeupFields();
+    });
+</script>
 </body>
 </html>

@@ -31,10 +31,9 @@ INSERT INTO enrollments (student_id, class_id, academic_year, scheduled_term) VA
 
 -- schedule_events テーブルの初期データ
 -- 情報セキュリティ論の休講
-INSERT INTO schedule_events (class_id, event_type, original_date, description, makeup_date, makeup_period, registered_by, created_at) VALUES
-(1, 'CANCELLATION', '2025-07-21', '担当教員の都合により、情報セキュリティ論は休講となります。', NULL, NULL, 1, '2025-07-18 10:00:00');
--- 応用数学Aの教室変更
+INSERT INTO schedule_events (class_id, event_type, event_date, event_period, description, makeup_date, makeup_period, registered_by, created_at) VALUES
+(1, 'CANCELLATION', '2025-07-21', 1, '担当教員の都合により、情報セキュリティ論は休講となります。', NULL, NULL, 1, '2025-07-18 10:00:00');
 
 -- プログラミング演習Iの振替授業
-INSERT INTO schedule_events (class_id, event_type, original_date, description, makeup_date, makeup_period, registered_by, created_at) VALUES
-(5, 'MAKEUP_CLASS', '2025-07-23', 'プログラミング演習Iの振替授業です。', '2025-07-28', 3, 1, '2025-07-18 12:00:00');
+INSERT INTO schedule_events (class_id, event_type, event_date, event_period, description, makeup_date, makeup_period, registered_by, created_at) VALUES
+(5, 'MAKEUP_CLASS', '2025-07-23', 3, 'プログラミング演習Iの振替授業です。', '2025-07-28', 3, 1, '2025-07-18 12:00:00');
