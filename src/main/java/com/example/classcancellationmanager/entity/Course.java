@@ -6,9 +6,9 @@ import lombok.Data;
 public class Course {
     private Long classId;
     private String className;
-    private String courseRulesName;
+    private Long courseRuleId;
     private Integer creditHours;
     private Integer academicYear;
-    private String scheduledTerm;
+    private Long termId;
     private Integer recommendedGrade;
 }

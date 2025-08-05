@@ -2,14 +2,27 @@ INSERT INTO users (username, password, role) VALUES
 ('admin@example.com', '$2a$08$9D.kojYEqAUSzR2Xv/9QSO4R/E2ZLEN1CAhTeGPuilOMBfTAuoI8W', 'ADMIN'),
 ('student@example.com', '$2a$08$di0VY/U2oZGAl.DMNZ2GlODLJ06f1WMmRb1kAzQ5st71XPbv7UEi.', 'STUDENT');
 
+-- course_rules テーブルの初期データ
+INSERT INTO course_rules (course_rule_name) VALUES
+('情報科学基礎'),
+('数学基礎'),
+('プログラミング基礎');
+
+-- terms テーブルの初期データ
+INSERT INTO terms (term_name) VALUES
+('前期'),
+('後期'),
+('夏期集中講義'),
+('春期集中講義');
+
 -- classes テーブルの初期データ
-INSERT INTO classes (class_name, course_rules_name, credit_hours, academic_year, scheduled_term, recommended_grade) VALUES
-('情報セキュリティ論', '情報科学基礎', 2, 2025, '前期', 3),
-('情報科学演習', '情報科学基礎', 2, 2025, '前期', 3),
-('応用数学A', '数学基礎', 2, 2025, '前期', 3),
-('応用数学B', '数学基礎', 2, 2025, '前期', 3),
-('プログラミング演習I', 'プログラミング基礎', 2, 2025, '前期', 2),
-('プログラミング演習II', 'プログラミング基礎', 2, 2025, '前期', 2);
+INSERT INTO classes (class_name, course_rule_id, credit_hours, academic_year, term_id, recommended_grade) VALUES
+('情報セキュリティ論', 1, 2, 2025, 1, 3),
+('情報科学演習', 1, 2, 2025, 1, 3),
+('応用数学A', 2, 2, 2025, 1, 3),
+('応用数学B', 2, 2, 2025, 1, 3),
+('プログラミング演習I', 3, 2, 2025, 1, 2),
+('プログラミング演習II', 3, 2, 2025, 1, 2);
 
 -- class_schedules テーブルの初期データ
 -- 情報セキュリティ論: 月曜1限

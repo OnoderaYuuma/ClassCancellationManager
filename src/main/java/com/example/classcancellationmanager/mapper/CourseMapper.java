@@ -9,9 +9,9 @@ import java.util.List;
 @Mapper
 public interface CourseMapper {
 
-    @Select("SELECT class_id, class_name, course_rules_name, credit_hours, academic_year, scheduled_term, recommended_grade FROM classes")
+    @Select("SELECT class_id, class_name, course_rule_id, credit_hours, academic_year, term_id, recommended_grade FROM classes")
     List<Course> findAll();
 
-    @Select("SELECT class_id, class_name, course_rules_name, credit_hours, academic_year, scheduled_term, recommended_grade FROM classes WHERE class_id = #{classId}")
+    @Select("SELECT class_id, class_name, course_rule_id, credit_hours, academic_year, term_id, recommended_grade FROM classes WHERE class_id = #{classId}")
     Course findById(Long classId);
 }
