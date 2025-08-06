@@ -1,6 +1,7 @@
 package com.example.classcancellationmanager.controller;
 
 import com.example.classcancellationmanager.entity.Event;
+import com.example.classcancellationmanager.form.ClassForm;
 import com.example.classcancellationmanager.form.EventForm;
 import com.example.classcancellationmanager.security.UserDetailsImpl;
 import com.example.classcancellationmanager.service.CourseService;
@@ -59,5 +60,27 @@ public class AdminController {
         }
 
         return "redirect:/admin/events";
+    }
+
+    @GetMapping("/classes/new")
+    public String newClassForm(Model model) {
+        model.addAttribute("classForm", new ClassForm());
+        model.addAttribute("courseRules", courseService.findAllCourseRules());
+        model.addAttribute("terms", courseService.findAllTerms());
+        // 推奨学年やコマ数のリストを渡すことも可能
+        return "admin/class_form";
+    }
+
+    @PostMapping("/classes")
+    public String createClass(@ModelAttribute ClassForm classForm, BindingResult result, Model model) {
+        if (result.hasErrors()) {
+            model.addAttribute("courseRules", courseService.findAllCourseRules());
+            model.addAttribute("terms", courseService.findAllTerms());
+            return "admin/class_form";
+        }
+
+        courseService.createClass(classForm);
+
+        return "redirect:/admin/events"; // 登録後はイベント一覧にリダイレクト
     }
 }
