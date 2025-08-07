@@ -21,4 +21,7 @@ public interface EventMapper {
             "VALUES (#{classId}, #{eventType}, #{eventDate}, #{eventPeriod}, #{description}, #{makeupDate}, #{makeupPeriod}, #{registeredBy})")
     @Options(useGeneratedKeys = true, keyProperty = "eventId")
     void insert(Event event);
+
+    @Select("SELECT * FROM schedule_events ORDER BY created_at DESC LIMIT 1")
+    Event findLatestEvent();
 }

@@ -39,5 +39,9 @@ public class EventService {
 
         eventMapper.insert(event);
     }
+
+    public Event findLatestEvent() {
+        return eventMapper.findLatestEvent();
+    }
 }
 
