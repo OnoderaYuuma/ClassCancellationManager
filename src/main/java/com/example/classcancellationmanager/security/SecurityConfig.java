@@ -28,6 +28,8 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .authorizeHttpRequests(authorize -> authorize
+                // ログインページと登録ページへのアクセスは誰でも許可
+                .requestMatchers("/login", "/register").permitAll()
                 // "/admin/**" へのアクセスは "ADMIN" 権限を持つユーザーのみ許可
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 // "/student/**" へのアクセスは "STUDENT" 権限を持つユーザーのみ許可

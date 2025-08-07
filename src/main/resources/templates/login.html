@@ -5,6 +5,9 @@
 </head>
 <body>
     <h1>Login</h1>
+    <div th:if="${message}" style="color: green;">
+        <p th:text="${message}"></p>
+    </div>
     <form th:action="@{/login}" method="post">
         <p th:if="${param.error}" style="color: red;">
             ユーザー名またはパスワードが正しくありません。
@@ -19,5 +22,6 @@
             <input type="submit" value="Login"/>
         </div>
     </form>
+    <a th:href="@{/register}">新規登録はこちら</a>
 </body>
 </html>

@@ -1,6 +1,7 @@
 package com.example.classcancellationmanager.mapper;
 
 import com.example.classcancellationmanager.entity.User;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -17,4 +18,7 @@ public interface UserMapper {
      */
     @Select("SELECT * FROM users WHERE username = #{username}")
     User findByUsername(String username);
+
+    @Insert("INSERT INTO users (username, password, role) VALUES (#{username}, #{password}, #{role})")
+    void insert(User user);
 }

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>新規登録</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background-color: #f4f4f4; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 320px; }
+        h1 { text-align: center; color: #333; margin-bottom: 20px;}
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: #555; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+        .btn { width: 100%; padding: 10px; border: none; border-radius: 4px; background-color: #007bff; color: white; cursor: pointer; font-size: 16px; }
+        .btn:hover { background-color: #0056b3; }
+        .login-link { text-align: center; margin-top: 15px; }
+        .login-link a { color: #007bff; text-decoration: none; }
+        .login-link a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>新規登録</h1>
+        <form th:action="@{/register}" method="post">
+            <div th:if="${message}" style="color: red;">
+                <p th:text="${message}"></p>
+            </div>
+            <div class="form-group">
+                <label for="username">学籍番号:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">パスワード:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn">登録</button>
+        </form>
+        <div class="login-link">
+            <a th:href="@{/login}">ログイン画面に戻る</a>
+        </div>
+    </div>
+</body>
+</html>
