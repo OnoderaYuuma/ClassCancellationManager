@@ -41,10 +41,11 @@ CREATE TABLE IF NOT EXISTS enrollments (
     student_id BIGINT NOT NULL,
     class_id BIGINT NOT NULL,
     academic_year INT NOT NULL,
-    scheduled_term VARCHAR(50) NOT NULL,
-    UNIQUE(student_id, class_id, academic_year, scheduled_term),
+    term_id BIGINT NOT NULL,
+    UNIQUE(student_id, class_id, academic_year, term_id),
     FOREIGN KEY (student_id) REFERENCES users(user_id),
-    FOREIGN KEY (class_id) REFERENCES classes(class_id)
+    FOREIGN KEY (class_id) REFERENCES classes(class_id),
+    FOREIGN KEY (term_id) REFERENCES terms(term_id)
 );
 
 CREATE TABLE IF NOT EXISTS schedule_events (

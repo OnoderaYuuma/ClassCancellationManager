@@ -37,10 +37,10 @@ INSERT INTO class_schedules (class_id, day_of_week, period) VALUES
 
 -- enrollments テーブルの初期データ
 -- student@example.com が情報セキュリティ論、応用数学A、プログラミング演習Iを履修
-INSERT INTO enrollments (student_id, class_id, academic_year, scheduled_term) VALUES
-(2, 1, 2025, '前期'),
-(2, 3, 2025, '前期'),
-(2, 5, 2025, '前期');
+INSERT INTO enrollments (student_id, class_id, academic_year, term_id) VALUES
+(2, 1, 2025, 1),
+(2, 3, 2025, 1),
+(2, 5, 2025, 1);
 
 -- schedule_events テーブルの初期データ
 -- 情報セキュリティ論の休講
