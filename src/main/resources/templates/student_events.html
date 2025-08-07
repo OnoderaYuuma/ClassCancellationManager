@@ -26,6 +26,11 @@
         </form>
     </div>
 
+    <div th:if="${showEnrollmentPrompt}" class="enrollment-prompt">
+        <p>新しい学期の履修登録がまだ完了していない可能性があります。</p>
+        <a th:href="@{/student/enrollment}">履修登録画面へ</a>
+    </div>
+
     <!-- カレンダーが描画されるコンテナ -->
     <div id="calendar"></div>
 

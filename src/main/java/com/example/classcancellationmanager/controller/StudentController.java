@@ -2,12 +2,15 @@ package com.example.classcancellationmanager.controller;
 
 import com.example.classcancellationmanager.entity.Course;
 import com.example.classcancellationmanager.entity.Enrollment;
+import com.example.classcancellationmanager.entity.Event;
 import com.example.classcancellationmanager.entity.Term;
+import com.example.classcancellationmanager.mapper.CourseMapper;
 import com.example.classcancellationmanager.mapper.EnrollmentMapper;
 import com.example.classcancellationmanager.mapper.TermMapper;
 import com.example.classcancellationmanager.security.UserDetailsImpl;
 import com.example.classcancellationmanager.service.CourseService;
 import com.example.classcancellationmanager.service.EnrollmentService;
+import com.example.classcancellationmanager.service.EventService;
 import com.example.classcancellationmanager.service.StudentScheduleService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -48,6 +51,12 @@ public class StudentController {
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private EventService eventService;
+
+    @Autowired
+    private CourseMapper courseMapper;
+
     @GetMapping("/events")
     public String showStudentEvents(Model model) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -68,6 +77,19 @@ public class StudentController {
         } catch (JsonProcessingException e) {
             e.printStackTrace();
             model.addAttribute("eventsJson", "[]");
+        }
+
+        // 履修登録催促メッセージのロジック
+        Event latestEvent = eventService.findLatestEvent();
+        if (latestEvent != null) {
+            Course latestCourse = courseMapper.findById(latestEvent.getClassId());
+            Enrollment latestEnrollment = enrollmentMapper.findLatestByStudentId(studentId);
+
+            if (latestEnrollment == null || 
+                !latestCourse.getAcademicYear().equals(latestEnrollment.getAcademicYear()) || 
+                !latestCourse.getTermId().equals(latestEnrollment.getTermId())) {
+                model.addAttribute("showEnrollmentPrompt", true);
+            }
         }
 
         return "student_events";

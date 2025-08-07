@@ -29,15 +29,28 @@ public class StudentScheduleService {
     @Autowired
     private CourseMapper courseMapper;
 
+    @Autowired
+    private EventService eventService;
+
     public List<Map<String, Object>> getStudentEventsForFullCalendar(Long studentId) {
         List<Map<String, Object>> fullCalendarEvents = new ArrayList<>();
+
+        // 最新のイベントから年度を取得
+        Event latestEvent = eventService.findLatestEvent();
+        int targetYear;
+        if (latestEvent != null) {
+            Course latestCourse = courseMapper.findById(latestEvent.getClassId());
+            targetYear = latestCourse.getAcademicYear();
+        } else {
+            targetYear = LocalDate.now().getYear();
+        }
 
         // 1. 学生が履修している授業の情報を取得
         List<Enrollment> enrollments = enrollmentMapper.findByStudentId(studentId);
 
         for (Enrollment enrollment : enrollments) {
             Course course = courseMapper.findById(enrollment.getClassId());
-            if (course == null) continue;
+            if (course == null || course.getAcademicYear() != targetYear) continue;
 
             // 2. 授業に関連するすべてのイベントを取得
             List<Event> events = eventMapper.findByClassId(enrollment.getClassId());
@@ -88,7 +101,7 @@ public class StudentScheduleService {
                                 event.getEventDate(),
                                 event.getEventPeriod(),
                                 event.getDescription(),
-                                "SPECIAL_LECTURE"
+                                "SPECIAL_LECTTURE"
                         ));
                         break;
 

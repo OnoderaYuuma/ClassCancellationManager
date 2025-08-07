@@ -26,4 +26,6 @@ public interface EnrollmentMapper {
             "VALUES (#{studentId}, #{classId}, #{academicYear}, #{termId})")
     void insert(Enrollment enrollment);
 
+    @Select("SELECT * FROM enrollments WHERE student_id = #{studentId} ORDER BY academic_year DESC, term_id DESC LIMIT 1")
+    Enrollment findLatestByStudentId(Long studentId);
 }
