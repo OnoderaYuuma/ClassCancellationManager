@@ -15,7 +15,7 @@ public interface ClassScheduleMapper {
     List<ClassSchedule> findAll();
 
     @Select("SELECT schedule_id, class_id, day_of_week, period FROM class_schedules WHERE class_id = #{classId}")
-    List<ClassSchedule> findByClassId(Integer classId);
+    List<ClassSchedule> findByClassId(Long classId);
 
     @Insert("INSERT INTO class_schedules (class_id, day_of_week, period) VALUES (#{classId}, #{dayOfWeek}, #{period})")
     void insert(ClassSchedule schedule);

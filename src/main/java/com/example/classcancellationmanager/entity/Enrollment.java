@@ -8,5 +8,5 @@ public class Enrollment {
     private Long studentId;
     private Long classId;
     private Integer academicYear;
-    private String scheduledTerm;
+    private Long termId;
 }

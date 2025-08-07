@@ -44,6 +44,15 @@ public class CourseService {
         return termMapper.findAll();
     }
 
+    // searchCourses メソッドを追加
+    public List<Course> searchCourses(int year, Long termId, String keyword, Long courseRuleId, Integer recommendedGrade) {
+        List<Course> courses = courseMapper.search(year, termId, keyword, courseRuleId, recommendedGrade);
+        for (Course course : courses) {
+            course.setSchedules(classScheduleMapper.findByClassId(course.getClassId()));
+        }
+        return courses;
+    }
+
     @Transactional
     public void createClass(ClassForm classForm) {
         // 1. classesテーブルに登録

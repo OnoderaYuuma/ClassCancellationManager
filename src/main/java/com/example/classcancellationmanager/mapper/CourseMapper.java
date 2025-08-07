@@ -21,4 +21,20 @@ public interface CourseMapper {
             "VALUES (#{className}, #{courseRuleId}, #{creditHours}, #{academicYear}, #{termId}, #{recommendedGrade})")
     @Options(useGeneratedKeys = true, keyProperty = "classId")
     void insert(Course course);
+
+    @Select("<script>" +
+            "SELECT class_id, class_name, course_rule_id, credit_hours, academic_year, term_id, recommended_grade " +
+            "FROM classes " +
+            "WHERE academic_year = #{year} AND term_id = #{termId} " +
+            "<if test='keyword != null and keyword != \"\"'> " +
+            "AND class_name LIKE CONCAT('%', #{keyword}, '%') " +
+            "</if> " +
+            "<if test='courseRuleId != null'> " +
+            "AND course_rule_id = #{courseRuleId} " +
+            "</if> " +
+            "<if test='recommendedGrade != null'> " +
+            "AND recommended_grade = #{recommendedGrade} " +
+            "</if> " +
+            "</script>")
+    List<Course> search(int year, Long termId, String keyword, Long courseRuleId, Integer recommendedGrade);
 }

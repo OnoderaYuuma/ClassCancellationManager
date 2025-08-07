@@ -2,6 +2,8 @@ package com.example.classcancellationmanager.entity;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class Course {
     private Long classId;
@@ -11,4 +13,5 @@ public class Course {
     private Integer academicYear;
     private Long termId;
     private Integer recommendedGrade;
+    private List<ClassSchedule> schedules;
 }

@@ -1,24 +1,31 @@
 package com.example.classcancellationmanager.controller;
 
-import com.example.classcancellationmanager.entity.User;
+import com.example.classcancellationmanager.entity.Course;
+import com.example.classcancellationmanager.entity.Enrollment;
+import com.example.classcancellationmanager.entity.Term;
+import com.example.classcancellationmanager.mapper.EnrollmentMapper;
+import com.example.classcancellationmanager.mapper.TermMapper;
 import com.example.classcancellationmanager.security.UserDetailsImpl;
+import com.example.classcancellationmanager.service.CourseService;
+import com.example.classcancellationmanager.service.EnrollmentService;
 import com.example.classcancellationmanager.service.StudentScheduleService;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
-/**
- * 学生画面に関するリクエストを処理するコントローラーです。
- */
 @Controller
 @RequestMapping("/student")
 public class StudentController {
@@ -27,50 +34,99 @@ public class StudentController {
     private StudentScheduleService studentScheduleService;
 
     @Autowired
-    private ObjectMapper objectMapper; // JSON変換用のObjectMapper
+    private CourseService courseService;
 
-    /**
-     * 学生向けの授業予定一覧画面（カレンダー）を表示します。
-     * ログインしている学生の予定を取得し、JSON形式でViewに渡します。
-     * @param model Modelオブジェクト
-     * @return 学生向けの授業予定一覧画面のテンプレート名
-     */
+    @Autowired
+    private EnrollmentService enrollmentService;
+
+    @Autowired
+    private TermMapper termMapper;
+
+    @Autowired
+    private EnrollmentMapper enrollmentMapper;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @GetMapping("/events")
     public String showStudentEvents(Model model) {
-        // --- 認証情報の取得 ---
-        // SecurityContextHolderから現在の認証情報を取得します。
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         Long studentId = null;
 
-        // 認証情報からUserDetailsを取り出し、学生IDを取得します。
-        // Spring Securityの認証プリンシパルがUserDetailsImplのインスタンスであることを期待しています。
-        // これは、UserDetailsServiceImplでユーザー情報をロードする際に返されるオブジェクトです。
         if (authentication != null && authentication.getPrincipal() instanceof UserDetailsImpl) {
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
             studentId = userDetails.getUserId();
         } else {
-            // 認証情報が取得できない、または期待した型でない場合はエラーページなどにリダイレクトすることを推奨
-            // ここでは、ひとまずログインページにリダイレクトする例を示します。
             return "redirect:/login";
         }
 
-        // --- イベント情報の取得とJSONへの変換 ---
-        // StudentScheduleServiceを使って、学生の予定リストを取得します。
         List<Map<String, Object>> events = studentScheduleService.getStudentEventsForFullCalendar(studentId);
 
         try {
-            // 取得したイベントリストをJSON文字列に変換します。
             String eventsJson = objectMapper.writeValueAsString(events);
-            // 変換したJSON文字列を "eventsJson" という名前でModelに追加します。
             model.addAttribute("eventsJson", eventsJson);
         } catch (JsonProcessingException e) {
-            // JSONへの変換に失敗した場合のフォールバック処理
-            // エラーログを出力し、空のJSON配列を渡すことで、フロントエンドでのエラーを防ぎます。
             e.printStackTrace();
             model.addAttribute("eventsJson", "[]");
         }
 
-        // student_events.htmlテンプレートを返します。
         return "student_events";
+    }
+
+    @GetMapping("/enrollment")
+    public String showEnrollmentScreen(@RequestParam(value = "year", required = false) Integer year,
+                                       @RequestParam(value = "termId", required = false) Long termId,
+                                       Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long studentId = ((UserDetailsImpl) authentication.getPrincipal()).getUserId();
+
+        int selectedYear = (year != null) ? year : LocalDate.now().getYear();
+        long selectedTermId = (termId != null) ? termId : (LocalDate.now().getMonthValue() >= 4 && LocalDate.now().getMonthValue() <= 8 ? 1L : 2L);
+
+        List<Integer> yearList = IntStream.rangeClosed(selectedYear - 1, selectedYear + 1).boxed().collect(Collectors.toList());
+        model.addAttribute("yearList", yearList);
+
+        List<Term> termList = termMapper.findAll();
+        model.addAttribute("termList", termList);
+
+        model.addAttribute("selectedYear", selectedYear);
+        model.addAttribute("selectedTermId", selectedTermId);
+
+        List<Course> courses = courseService.searchCourses(selectedYear, selectedTermId, null, null, null);
+        model.addAttribute("courses", courses);
+
+        List<Enrollment> enrolledCourses = enrollmentMapper.findByStudentIdAndYearAndTerm(studentId, selectedYear, selectedTermId);
+        List<Long> enrolledClassIds = enrolledCourses.stream()
+                                                    .map(Enrollment::getClassId)
+                                                    .collect(Collectors.toList());
+        model.addAttribute("enrolledClassIds", enrolledClassIds);
+
+        return "student/enrollment";
+    }
+
+    @PostMapping("/enrollment")
+    public String processEnrollment(@RequestParam("academicYear") int year,
+                                    @RequestParam("termId") Long termId,
+                                    @RequestParam(value = "classIds", required = false) List<Long> classIds) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        Long studentId = ((UserDetailsImpl) authentication.getPrincipal()).getUserId();
+
+        if (classIds == null) {
+            classIds = Collections.emptyList();
+        }
+
+        enrollmentService.updateEnrollments(studentId, year, termId, classIds);
+
+        return "redirect:/student/events";
+    }
+
+    @GetMapping("/api/courses")
+    @ResponseBody
+    public List<Course> searchCourses(@RequestParam("year") int year,
+                                      @RequestParam("termId") Long termId,
+                                      @RequestParam(value = "keyword", required = false) String keyword,
+                                      @RequestParam(value = "courseRuleId", required = false) Long courseRuleId,
+                                      @RequestParam(value = "recommendedGrade", required = false) Integer recommendedGrade) {
+        return courseService.searchCourses(year, termId, keyword, courseRuleId, recommendedGrade);
     }
 }

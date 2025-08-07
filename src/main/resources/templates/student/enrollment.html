@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>履修登録</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        .controls { margin-bottom: 20px; }
+        .controls label { margin-right: 10px; }
+        .controls select, .controls input[type="text"] { padding: 5px; margin-right: 10px; }
+        .controls button { padding: 8px 15px; background-color: #007bff; color: white; border: none; cursor: pointer; }
+        .controls button:hover { background-color: #0056b3; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .action-buttons { margin-top: 20px; }
+        .action-buttons button { padding: 10px 20px; background-color: #28a745; color: white; border: none; cursor: pointer; margin-right: 10px; }
+        .action-buttons button:hover { background-color: #218838; }
+        .action-buttons a { padding: 10px 20px; background-color: #6c757d; color: white; text-decoration: none; border-radius: 5px; }
+        .action-buttons a:hover { background-color: #5a6268; }
+    </style>
+</head>
+<body>
+
+    <h1>履修登録</h1>
+
+    <div class="controls">
+        <label for="academic-year">年度:</label>
+        <select id="academic-year" name="academicYear">
+            <option th:each="year : ${yearList}" th:value="${year}" th:text="${year + '年度'}" th:selected="${year == selectedYear}"></option>
+        </select>
+
+        <label for="term">学期:</label>
+        <select id="term" name="termId">
+            <option th:each="term : ${termList}" th:value="${term.termId}" th:text="${term.termName}" th:selected="${term.termId == selectedTermId}"></option>
+        </select>
+
+        <input type="text" id="search-keyword" placeholder="授業名キーワード">
+        <button type="button" id="search-btn">検索</button>
+    </div>
+
+    <form id="enrollment-form" th:action="@{/student/enrollment}" method="post">
+        <input type="hidden" name="academicYear" th:value="${selectedYear}">
+        <input type="hidden" name="termId" th:value="${selectedTermId}">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>選択</th>
+                    <th>授業名</th>
+                    <th>単位数</th>
+                    <th>推奨学年</th>
+                    <th>曜日・時限</th>
+                </tr>
+            </thead>
+            <tbody id="course-list">
+                <!-- 授業リストがここに表示される -->
+                <tr th:each="course : ${courses}">
+                    <td>
+                        <input type="checkbox" name="classIds" th:value="${course.classId}" th:checked="${#lists.contains(enrolledClassIds, course.classId)}">
+                    </td>
+                    <td th:text="${course.className}"></td>
+                    <td th:text="${course.creditHours}"></td>
+                    <td th:text="${course.recommendedGrade}"></td>
+                    <td>
+                        <span th:each="schedule, iterStat : ${course.schedules}">
+                            <span th:text="${schedule.dayOfWeek + '曜' + schedule.period + '限'}"></span><span th:if="${!iterStat.last}">, </span>
+                        </span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="action-buttons">
+            <button type="submit">履修登録を更新</button>
+            <a th:href="@{/student/events}">カレンダーに戻る</a>
+        </div>
+    </form>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script th:inline="javascript">
+        /*<![CDATA[*/
+        $(document).ready(function () {
+            // 年度・学期ドロップダウンのイベントハンドラ
+            $('#academic-year, #term').change(function () {
+                const year = $('#academic-year').val();
+                const termId = $('#term').val();
+                window.location.href = `/student/enrollment?year=${year}&termId=${termId}`;
+            });
+
+            // 検索ボタンのイベントハンドラ
+            $('#search-btn').click(function() {
+                const year = $('#academic-year').val();
+                const termId = $('#term').val();
+                const keyword = $('#search-keyword').val();
+
+                $.ajax({
+                    url: '/student/api/courses',
+                    type: 'GET',
+                    data: { year: year, termId: termId, keyword: keyword },
+                    success: function (courses) {
+                        const courseListBody = $('#course-list');
+                        courseListBody.empty(); // 既存のリストをクリア
+
+                        const enrolledClassIds = /*[[${enrolledClassIds}]]*/ []; // 登録済みの授業IDを取得
+
+                        courses.forEach(course => {
+                            const isEnrolled = enrolledClassIds.includes(course.classId);
+                            let schedulesHtml = '';
+                            if (course.schedules && course.schedules.length > 0) {
+                                schedulesHtml = course.schedules.map(s => `${s.dayOfWeek}曜${s.period}限`).join(', ');
+                            }
+
+                            const row =
+                                '<tr>' +
+                                    '<td><input type="checkbox" name="classIds" value="' + course.classId + '" ' + (isEnrolled ? 'checked' : '') + '></td>' +
+                                    '<td>' + course.className + '</td>' +
+                                    '<td>' + course.creditHours + '</td>' +
+                                    '<td>' + course.recommendedGrade + '</td>' +
+                                    '<td>' + schedulesHtml + '</td>' +
+                                '</tr>';
+                            ;
+                            courseListBody.append(row);
+                        });
+                    },
+                    error: function(xhr, status, error) {
+                        console.error("授業検索エラー:", error);
+                        alert("授業検索中にエラーが発生しました。");
+                    }
+                });
+            });
+        });
+        /*]]>*/
+    </script>
+
+</body>
+</html>

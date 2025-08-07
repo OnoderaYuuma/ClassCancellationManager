@@ -18,15 +18,19 @@
 </head>
 <body>
 
-    <h1>授業予定カレンダー</h1>
+    <div style="background-color: #f2f2f2; display: flex;">
+        <h1 style="text-align: left;">授業予定カレンダー</h1>
+        <a th:href="@{/student/enrollment}" style="text-align: right;">履修登録</a>
+        <form th:action="@{/logout}" method="post" style="text-align: right;">
+            <input type="submit" value="ログアウト"/>
+        </form>
+    </div>
 
     <!-- カレンダーが描画されるコンテナ -->
     <div id="calendar"></div>
 
     <!-- ログアウトボタン -->
-    <form th:action="@{/logout}" method="post" style="text-align: center; margin-top: 20px;">
-        <input type="submit" value="ログアウト"/>
-    </form>
+
 
     <!-- FullCalendarのJavaScriptをCDNから読み込み -->
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js"></script>
