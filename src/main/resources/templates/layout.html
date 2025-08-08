@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(title, content, css, js)">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title th:replace="${title}">レイアウトタイトル</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <th:block th:replace="${css} ?: ~{}"></th:block>
+
+  <link th:href="@{/css/custom.css}" rel="stylesheet">
+</head>
+<body class="d-flex flex-column min-vh-100">
+
+<header th:fragment="headerFragment">
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container-fluid">
+      <a class="navbar-brand" th:href="@{/}">授業休講管理システム</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+          <li class="nav-item" sec:authorize="hasRole('STUDENT')">
+            <a class="nav-link" th:href="@{/student/events}">カレンダー</a>
+          </li>
+          <li class="nav-item" sec:authorize="hasRole('STUDENT')">
+            <a class="nav-link" th:href="@{/student/enrollment}">履修登録</a>
+          </li>
+
+          <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a class="nav-link" th:href="@{/admin/events}">予定管理</a>
+          </li>
+          <li class="nav-item dropdown" sec:authorize="hasRole('ADMIN')">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownAdmin" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              新規登録
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownAdmin">
+              <li><a class="dropdown-item" th:href="@{/admin/events/new}">授業予定の登録</a></li>
+              <li><a class="dropdown-item" th:href="@{/admin/classes/new}">授業情報の登録</a></li>
+            </ul>
+          </li>
+        </ul>
+
+        <div class="d-flex">
+          <form th:action="@{/logout}" method="post" sec:authorize="isAuthenticated()">
+            <button class="btn btn-outline-light" type="submit">ログアウト</button>
+          </form>
+          <a th:href="@{/login}" class="btn btn-light" sec:authorize="!isAuthenticated()">ログイン</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+</header>
+
+<main class="container mt-4">
+  <div th:replace="${content}">
+    <p>ここにメインコンテンツを記述します。</p>
+  </div>
+</main>
+
+<footer th:fragment="footerFragment" class="bg-light text-center text-lg-start mt-auto py-3">
+  <div class="text-center">
+    &copy; 2025 Class Cancellation Manager
+  </div>
+</footer>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<th:block th:replace="${js} ?: ~{}"></th:block>
+
+</body>
+</html>

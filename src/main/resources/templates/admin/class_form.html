@@ -1,17 +1,16 @@
 <!DOCTYPE html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, _, ~{::#custom-js})}">
 <head>
-    <meta charset="UTF-8">
     <title>授業情報追加</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body>
-<div class="container mt-5">
-    <h2>授業情報追加</h2>
+
+<div id="content">
+    <h2 class="mb-4">授業情報追加</h2>
 
     <form th:action="@{/admin/classes}" th:object="${classForm}" method="post">
-        <!-- classes テーブル関連 -->
-        <div class.mb-3>
+        <div class="mb-3">
             <label for="className" class="form-label">授業名</label>
             <input type="text" id="className" th:field="*{className}" class="form-control" required>
         </div>
@@ -51,73 +50,71 @@
             </div>
         </div>
 
-        <hr>
+        <hr class="my-4">
 
-        <!-- class_schedules テーブル関連 -->
         <h4>授業スケジュール</h4>
-        <div id="schedules-container">
-            <!-- JavaScriptで動的に追加 -->
+        <div id="schedules-container" class="mb-3">
         </div>
-        <button type="button" id="add-schedule-btn" class="btn btn-outline-primary mt-2">＋ スケジュールを追加</button>
+        <button type="button" id="add-schedule-btn" class="btn btn-outline-primary">＋ スケジュールを追加</button>
 
-        <hr>
+        <hr class="my-4">
 
         <button type="submit" class="btn btn-primary">登録</button>
         <a href="/admin/events" class="btn btn-secondary">キャンセル</a>
     </form>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const container = document.getElementById('schedules-container');
-        const addBtn = document.getElementById('add-schedule-btn');
-        let scheduleIndex = 0;
+<th:block id="custom-js">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const container = document.getElementById('schedules-container');
+            const addBtn = document.getElementById('add-schedule-btn');
+            let scheduleIndex = 0;
 
-        function addSchedule() {
-            const scheduleDiv = document.createElement('div');
-            scheduleDiv.classList.add('row', 'align-items-center', 'mb-2', 'schedule-item');
-
-            scheduleDiv.innerHTML = `
-                <div class="col-md-5">
-                    <label class="form-label">曜日</label>
-                    <select name="schedules[${scheduleIndex}].dayOfWeek" class="form-select" required>
-                        <option value="MONDAY">月曜日</option>
-                        <option value="TUESDAY">火曜日</option>
-                        <option value="WEDNESDAY">水曜日</option>
-                        <option value="THURSDAY">木曜日</option>
-                        <option value="FRIDAY">金曜日</option>
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label class="form-label">コマ</label>
-                    <select name="schedules[${scheduleIndex}].period" class="form-select" required>
-                        <option value="1">1限</option>
-                        <option value="2">2限</option>
-                        <option value="3">3限</option>
-                        <option value="4">4限</option>
-                    </select>
-                </div>
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-danger remove-schedule-btn">削除</button>
-                </div>
-            `;
-
-            container.appendChild(scheduleDiv);
-            scheduleIndex++;
-        }
-
-        addBtn.addEventListener('click', addSchedule);
-
-        container.addEventListener('click', function (e) {
-            if (e.target && e.target.classList.contains('remove-schedule-btn')) {
-                e.target.closest('.schedule-item').remove();
+            function addSchedule() {
+                const scheduleDiv = document.createElement('div');
+                scheduleDiv.classList.add('row', 'g-3', 'align-items-end', 'mb-2', 'schedule-item');
+                scheduleDiv.innerHTML = `
+                    <div class="col-md-5">
+                        <label class="form-label">曜日</label>
+                        <select name="schedules[${scheduleIndex}].dayOfWeek" class="form-select" required>
+                            <option value="MONDAY">月曜日</option>
+                            <option value="TUESDAY">火曜日</option>
+                            <option value="WEDNESDAY">水曜日</option>
+                            <option value="THURSDAY">木曜日</option>
+                            <option value="FRIDAY">金曜日</option>
+                        </select>
+                    </div>
+                    <div class="col-md-5">
+                        <label class="form-label">コマ</label>
+                        <select name="schedules[${scheduleIndex}].period" class="form-select" required>
+                            <option value="1">1限</option>
+                            <option value="2">2限</option>
+                            <option value="3">3限</option>
+                            <option value="4">4限</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-danger w-100 remove-schedule-btn">削除</button>
+                    </div>
+                `;
+                container.appendChild(scheduleDiv);
+                scheduleIndex++;
             }
-        });
 
-        // 初期状態で1つ表示
-        addSchedule();
-    });
-</script>
+            addBtn.addEventListener('click', addSchedule);
+
+            container.addEventListener('click', function (e) {
+                if (e.target && e.target.classList.contains('remove-schedule-btn')) {
+                    e.target.closest('.schedule-item').remove();
+                }
+            });
+
+            // 初期状態で1つ表示
+            addSchedule();
+        });
+    </script>
+</th:block>
 
 </body>
 </html>

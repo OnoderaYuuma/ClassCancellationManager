@@ -1,37 +1,54 @@
 <!DOCTYPE html>
-<html lang="ja" xmlns:th="http://www.thymeleaf.org">
+<html lang="ja" xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{layout :: layout(~{::title}, ~{::#content}, ~{::#custom-css}, ~{::#custom-js})}">
 <head>
-    <meta charset="UTF-8">
     <title>授業予定登録</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
-    <style>
-        /* アニメーションのためのCSS */
-        .makeup-info-wrapper {
-            overflow: hidden;
-            transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
-            max-height: 0;
-            opacity: 0;
-        }
-        .makeup-info-wrapper.show {
-            max-height: 300px; /* 十分な高さを確保 */
-            opacity: 1;
-        }
-    </style>
+
+    <th:block id="custom-css">
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet"/>
+        <style>
+            /* アニメーションのためのCSS */
+            .makeup-info-wrapper {
+                overflow: hidden;
+                transition: max-height 0.5s ease-in-out, opacity 0.5s ease-in-out;
+                max-height: 0;
+                opacity: 0;
+            }
+            .makeup-info-wrapper.show {
+                max-height: 300px; /* 十分な高さを確保 */
+                opacity: 1;
+            }
+            /* Select2がBootstrap5と連携するためのスタイル */
+            .select2-container--default .select2-selection--single {
+                height: calc(1.5em + .75rem + 2px);
+                padding: .375rem .75rem;
+                border: 1px solid #ced4da;
+                border-radius: .25rem;
+            }
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: calc(1.5em + .75rem);
+            }
+        </style>
+    </th:block>
 </head>
 <body>
-<div class="container mt-4">
+
+<div id="content">
     <h1>授業予定登録</h1>
 
-    <form id="filter-form" th:action="@{/admin/events/new}" method="get" class="row g-3 align-items-center mb-4">
+    <form id="filter-form" th:action="@{/admin/events/new}" method="get" class="row g-3 align-items-center my-4 p-3 bg-light border rounded">
         <div class="col-auto">
             <label for="year" class="form-label">年度</label>
+        </div>
+        <div class="col-auto">
             <select id="year" name="year" class="form-select">
                 <option th:each="y : ${yearList}" th:value="${y}" th:text="${y}" th:selected="${y == selectedYear}"></option>
             </select>
         </div>
         <div class="col-auto">
             <label for="term" class="form-label">学期</label>
+        </div>
+        <div class="col-auto">
             <select id="term" name="termId" class="form-select">
                 <option th:each="t : ${termList}" th:value="${t.termId}" th:text="${t.termName}" th:selected="${t.termId == selectedTermId}"></option>
             </select>
@@ -58,46 +75,48 @@
                 <option value="SPECIAL_LECTURE">特別講義</option>
             </select>
         </div>
-        <div class="mb-3">
-            <label for="eventDate" class="form-label">イベント日</label>
-            <input type="date" id="eventDate" class="form-control" th:field="*{eventDate}" required>
-        </div>
-        <div class="mb-3">
-            <label for="eventPeriod" class="form-label">イベント時限</label>
-            <select id="eventPeriod" class="form-select" th:field="*{eventPeriod}" required>
-                <option value="">時限を選択してください</option>
-                <option th:each="p : ${#numbers.sequence(1, 4)}" th:value="${p}" th:text="${p + '限'}"></option>
-            </select>
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label for="eventDate" class="form-label">イベント日</label>
+                <input type="date" id="eventDate" class="form-control" th:field="*{eventDate}" required>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label for="eventPeriod" class="form-label">イベント時限</label>
+                <select id="eventPeriod" class="form-select" th:field="*{eventPeriod}" required>
+                    <option value="">時限を選択してください</option>
+                    <option th:each="p : ${#numbers.sequence(1, 4)}" th:value="${p}" th:text="${p + '限'}"></option>
+                </select>
+            </div>
         </div>
         <div class="mb-3">
             <label for="description" class="form-label">詳細</label>
             <textarea id="description" class="form-control" rows="3" th:field="*{description}"></textarea>
         </div>
 
-        <!-- 休講選択時に表示される振替設定 -->
         <div id="cancellationOptions" class="d-none">
             <div class="form-check mb-3">
                 <input class="form-check-input" type="checkbox" id="setMakeupClass">
                 <label class="form-check-label" for="setMakeupClass">
-                    振替授業を設定する
+                    振替授業を同時に設定する
                 </label>
             </div>
         </div>
 
-        <!-- 振替情報入力欄 (最初は非表示) -->
         <div id="makeupInfo" class="makeup-info-wrapper">
             <div class="card card-body">
                 <h5>振替情報</h5>
-                <div class="mb-3">
-                    <label for="makeupDate" class="form-label">振替日</label>
-                    <input type="date" id="makeupDate" class="form-control" th:field="*{makeupDate}">
-                </div>
-                <div class="mb-3">
-                    <label for="makeupPeriod" class="form-label">振替時限</label>
-                    <select id="makeupPeriod" class="form-select" th:field="*{makeupPeriod}">
-                        <option value="">時限を選択してください</option>
-                        <option th:each="p : ${#numbers.sequence(1, 4)}" th:value="${p}" th:text="${p + '限'}"></option>
-                    </select>
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="makeupDate" class="form-label">振替日</label>
+                        <input type="date" id="makeupDate" class="form-control" th:field="*{makeupDate}">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="makeupPeriod" class="form-label">振替時限</label>
+                        <select id="makeupPeriod" class="form-select" th:field="*{makeupPeriod}">
+                            <option value="">時限を選択してください</option>
+                            <option th:each="p : ${#numbers.sequence(1, 4)}" th:value="${p}" th:text="${p + '限'}"></option>
+                        </select>
+                    </div>
                 </div>
             </div>
         </div>
@@ -107,55 +126,49 @@
     </form>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const eventTypeSelect = document.getElementById('eventType');
-        const cancellationOptions = document.getElementById('cancellationOptions');
-        const setMakeupClassCheckbox = document.getElementById('setMakeupClass');
-        const makeupInfo = document.getElementById('makeupInfo');
+<th:block id="custom-js">
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Select2の初期化
+            $('#classId').select2({
+                theme: "default" // Bootstrap5と連携させる場合はテーマ指定が有効なことがある
+            });
 
-        function toggleMakeupFields() {
-            const isCancellation = eventTypeSelect.value === 'CANCELLATION';
-            const isMakeupChecked = setMakeupClassCheckbox.checked;
+            const eventTypeSelect = document.getElementById('eventType');
+            const cancellationOptions = document.getElementById('cancellationOptions');
+            const setMakeupClassCheckbox = document.getElementById('setMakeupClass');
+            const makeupInfo = document.getElementById('makeupInfo');
 
-            // 「休講」選択時のみ振替設定チェックボックスを表示
-            if (isCancellation) {
-                cancellationOptions.classList.remove('d-none');
-            } else {
-                cancellationOptions.classList.add('d-none');
+            function toggleMakeupFields() {
+                const isCancellation = eventTypeSelect.value === 'CANCELLATION';
+                const isMakeupChecked = setMakeupClassCheckbox.checked;
+
+                if (isCancellation) {
+                    cancellationOptions.classList.remove('d-none');
+                } else {
+                    cancellationOptions.classList.add('d-none');
+                    setMakeupClassCheckbox.checked = false; // 休講以外ではチェックを外す
+                }
+
+                if (isCancellation && isMakeupChecked) {
+                    makeupInfo.classList.add('show');
+                    document.getElementById('makeupDate').required = true;
+                    document.getElementById('makeupPeriod').required = true;
+                } else {
+                    makeupInfo.classList.remove('show');
+                    document.getElementById('makeupDate').required = false;
+                    document.getElementById('makeupPeriod').required = false;
+                }
             }
 
-            // 振替設定がチェックされている場合のみ振替情報欄を表示
-            if (isCancellation && isMakeupChecked) {
-                makeupInfo.classList.add('show');
-                // 必須属性を動的に設定
-                document.getElementById('makeupDate').required = true;
-                document.getElementById('makeupPeriod').required = true;
-            } else {
-                makeupInfo.classList.remove('show');
-                // 必須属性を解除
-                document.getElementById('makeupDate').required = false;
-                document.getElementById('makeupPeriod').required = false;
-            }
-        }
+            eventTypeSelect.addEventListener('change', toggleMakeupFields);
+            setMakeupClassCheckbox.addEventListener('change', toggleMakeupFields);
 
-        eventTypeSelect.addEventListener('change', toggleMakeupFields);
-        setMakeupClassCheckbox.addEventListener('change', toggleMakeupFields);
+            toggleMakeupFields(); // 初期表示処理
+        });
+    </script>
+</th:block>
 
-        // 初期表示処理
-        toggleMakeupFields();
-    });
-</script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
-<script>
-    // ページの読み込みが完了したら実行
-    $(document).ready(function() {
-        // idが "classId" の要素を検索機能付きプルダウンに置き換える
-        $('#classId').select2();
-    });
-</script>
 </body>
 </html>
