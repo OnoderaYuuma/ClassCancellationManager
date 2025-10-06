@@ -11,7 +11,7 @@ import java.util.List;
 @Mapper
 public interface EventMapper {
 
-    @Select("SELECT event_id, class_id, event_type, event_date, event_period, description, makeup_date, makeup_period, registered_by, created_at FROM schedule_events")
+    @Select("SELECT event_id, class_id, event_type, event_date, event_period, description, makeup_date, makeup_period, registered_by, created_at FROM schedule_events ORDER BY event_date DESC")
     List<Event> findAll();
 
     @Select("SELECT event_id, class_id, event_type, event_date, event_period, description, makeup_date, makeup_period, registered_by, created_at FROM schedule_events WHERE class_id = #{classId}")

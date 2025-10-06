@@ -20,7 +20,7 @@
             <thead class="table-dark">
             <tr>
                 <th>イベントID</th>
-                <th>授業ID</th>
+                <th>授業名</th>
                 <th>イベント種別</th>
                 <th>イベント日</th>
                 <th>イベント時限</th>
@@ -32,7 +32,7 @@
             <tbody>
             <tr th:each="event : ${events}">
                 <td th:text="${event.eventId}"></td>
-                <td th:text="${event.classId}"></td>
+                <td th:text="${event.className}"></td>
                 <td>
                     <span th:switch="${event.eventType}">
                         <span th:case="'CANCELLATION'" class="badge bg-danger">休講</span>

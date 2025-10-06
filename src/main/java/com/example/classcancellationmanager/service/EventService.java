@@ -1,7 +1,9 @@
 package com.example.classcancellationmanager.service;
 
+import com.example.classcancellationmanager.entity.Course;
 import com.example.classcancellationmanager.entity.Event;
 import com.example.classcancellationmanager.mapper.ClassScheduleMapper;
+import com.example.classcancellationmanager.mapper.CourseMapper;
 import com.example.classcancellationmanager.mapper.EventMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -19,8 +21,22 @@ public class EventService {
     @Autowired
     private ClassScheduleMapper classScheduleMapper;
 
+    @Autowired
+    private CourseMapper courseMapper;
+
     public List<Event> findAllEvents() {
-        return eventMapper.findAll();
+        List<Event> events = eventMapper.findAll();
+
+        // 2. 各イベントに授業名をセットする
+        for (Event event : events) {
+            Course course = courseMapper.findById(event.getClassId());
+            if (course != null) {
+                event.setClassName(course.getClassName());
+            } else {
+                event.setClassName("（授業情報なし）"); // 念のため、関連授業が見つからない場合の表示
+            }
+        }
+        return events;
     }
 
     @Transactional

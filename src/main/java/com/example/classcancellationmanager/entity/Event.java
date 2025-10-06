@@ -17,4 +17,5 @@ public class Event {
     private Integer makeupPeriod;
     private Long registeredBy;
     private LocalDateTime createdAt;
+    private String className;
 }
